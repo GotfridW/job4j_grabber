@@ -33,9 +33,11 @@ public class HabrCareerParse implements Parse {
     }
 
     private Post createPost(Element element) {
-        var linkElement = element.select(".vacancy-card__title").first();
+        var linkElement = Objects.requireNonNull(element.select(".vacancy-card__title")
+                .first())
+                .child(0);
         var dateElement = element.select(".basic-date");
-        var title = Objects.requireNonNull(linkElement).child(0).text();
+        var title = linkElement.text();
         var link = String.format("%s%s", SOURCE_LINK, linkElement.attr("href"));
         var description = retrieveDescription(link);
         var created = dateTimeParser.parse(dateElement.attr("datetime"));
