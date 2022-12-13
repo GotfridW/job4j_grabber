@@ -45,11 +45,11 @@ public class HabrCareerParse implements Parse {
     }
 
     @Override
-    public List<Post> list(String link) {
+    public List<Post> list() {
         List<Post> postList = new ArrayList<>();
         try {
             for (var i = 1; i <= PAGES; i++) {
-                var document = Jsoup.connect(link + i).get();
+                var document = Jsoup.connect(PAGE_LINK + i).get();
                 var cards = document.select(".vacancy-card__inner");
                 cards.stream()
                         .map(this::createPost)

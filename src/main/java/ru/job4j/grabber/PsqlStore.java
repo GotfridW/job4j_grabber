@@ -101,8 +101,7 @@ public class PsqlStore implements Store {
             try (Store store = new PsqlStore(cfg)) {
                 DateTimeParser parser = new HabrCareerDateTimeParser();
                 Parse parse = new HabrCareerParse(parser);
-                var link = "https://career.habr.com/vacancies/java_developer?page=";
-                List<Post> jobs = parse.list(link);
+                List<Post> jobs = parse.list();
                 jobs.forEach(store::save);
                 store.getAll().forEach(System.out::println);
                 System.out.printf("%nPost with id #10:%n%s", store.findById(35));
