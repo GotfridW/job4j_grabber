@@ -5,6 +5,7 @@ import org.quartz.impl.StdSchedulerFactory;
 import ru.job4j.grabber.utils.HabrCareerDateTimeParser;
 
 import java.io.*;
+import java.net.ServerSocket;
 import java.util.Properties;
 
 import static org.quartz.JobBuilder.newJob;
@@ -53,8 +54,8 @@ public class Grabber implements Grab {
         @Override
         public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
             var map = jobExecutionContext.getJobDetail().getJobDataMap();
-            Store store = (Store) map.get("store");
-            Parse parse = (Parse) map.get("parse");
+            var store = (Store) map.get("store");
+            var parse = (Parse) map.get("parse");
             try {
                 parse.list().forEach(store::save);
             } catch (Exception e) {
@@ -63,11 +64,33 @@ public class Grabber implements Grab {
         }
     }
 
+    public void web(Store store) {
+        new Thread(() -> {
+            try (var server = new ServerSocket(Integer.parseInt(cfg.getProperty("port")))) {
+                while (!server.isClosed()) {
+                    var socket = server.accept();
+                    try (var out = socket.getOutputStream()) {
+                        out.write("HTTP/1.1 200 OK\r\n\r\n".getBytes());
+                        for (var post : store.getAll()) {
+                            out.write(post.toString().getBytes());
+                            out.write(System.lineSeparator().getBytes());
+                        }
+                    } catch (IOException io) {
+                        io.printStackTrace();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     public static void main(String[] args) throws Exception {
         var grab = new Grabber();
         grab.cfg();
         var scheduler = grab.scheduler();
         var store = grab.store();
         grab.init(new HabrCareerParse(new HabrCareerDateTimeParser()), store, scheduler);
+        grab.web(store);
     }
 }
